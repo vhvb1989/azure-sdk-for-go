@@ -606,8 +606,12 @@ func getGitRoot(fromPath string) (string, error) {
 // Stop searching when the root of the git repository is reached.
 // This function assumes the asset config will be located in the service directory or above.
 func findAssetsConfigFile(fromPath string) (string, error) {
-	assetConfigPath := path.Join(fromPath, recordingAssetConfigName)
-	gitDirectoryPath := path.Join(fromPath, ".git")
+	absPath, err := filepath.Abs(fromPath)
+	if err != nil {
+		return "", err
+	}
+	assetConfigPath := path.Join(absPath, recordingAssetConfigName)
+	gitDirectoryPath := path.Join(absPath, ".git")
 
 	if _, err := os.Stat(assetConfigPath); err == nil {
 		return filepath.Abs(assetConfigPath)
@@ -621,9 +625,10 @@ func findAssetsConfigFile(fromPath string) (string, error) {
 		return "", err
 	}
 
-	parentDir, _ := filepath.Split(strings.TrimRight(fromPath, "/"))
-	// Be defensive here to avoid possible infinite loops at root
-	if len(parentDir) <= 1 {
+	trimmedPath := strings.TrimRight(absPath, "/"+string(os.PathSeparator))
+	parentDir, _ := filepath.Split(trimmedPath)
+	// If the parent directory is the same as current dir, we've reached root
+	if parentDir == trimmedPath {
 		return "", nil
 	}
 
