@@ -596,10 +596,12 @@ func getGitRoot(fromPath string, i int) (string, error) {
 		return "", err
 	}
 
-	parentDir, _ := filepath.Split(strings.TrimRight(absPath, "/"))
+	trimmedPath := strings.TrimRight(absPath, "/"+string(os.PathSeparator))
+	parentDir, _ := filepath.Split(trimmedPath)
+	fmt.Println("TRIM DIR: " + trimmedPath)
 	fmt.Println("PARENT DIR: " + parentDir)
 	fmt.Println(fmt.Sprintf("PARENT DIR LEN: %d", len(parentDir)))
-	if len(parentDir) <= 1 {
+	if parentDir == trimmedPath {
 		return "", fmt.Errorf("Unable to find git root from '%s'", fromPath)
 	}
 
