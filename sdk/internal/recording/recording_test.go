@@ -560,12 +560,12 @@ func TestRecordingAssetConfigNotExist(t *testing.T) {
 func TestGitRoot(t *testing.T) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
-	_, err = getGitRoot(cwd, 0)
+	_, err = getGitRoot(cwd)
 	require.NoError(t, err)
 }
 
 func TestGitRootNotFound(t *testing.T) {
-	_, err := getGitRoot("../../../../", 0)
+	_, err := getGitRoot("../../../../")
 	require.Error(t, err)
 }
 
@@ -579,7 +579,7 @@ func TestRecordingAssetConfigInCwd(t *testing.T) {
 	recordingPath := "sdk/internal/recording"
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
-	gitRoot, err := getGitRoot(cwd, 0)
+	gitRoot, err := getGitRoot(cwd)
 	require.NoError(t, err)
 
 	assetConfigPath := path.Join(gitRoot, recordingPath, recordingAssetConfigName)
