@@ -606,7 +606,7 @@ func TestRecordingAssetConfigInCwd(t *testing.T) {
 
 func TestRecordingAssetConfigInParent(t *testing.T) {
 	parentAssetPath := "../" + recordingAssetConfigName
-	cleanTestFile(t, parentAssetPath)
+	_ = os.Remove(parentAssetPath)
 	defer cleanTestFile(t, parentAssetPath)
 
 	_, err := os.Create(parentAssetPath)
