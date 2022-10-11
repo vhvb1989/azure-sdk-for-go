@@ -575,6 +575,11 @@ func TestRecordingAssetConfigOutOfBounds(t *testing.T) {
 	require.Equal(t, "", assetPath)
 }
 
+func cleanTestFile(t *testing.T, filePath string) {
+	err := os.Remove(filePath)
+	require.NoError(t, err)
+}
+
 func TestRecordingAssetConfigInCwd(t *testing.T) {
 	recordingPath := "sdk/internal/recording"
 	cwd, err := os.Getwd()
@@ -583,8 +588,8 @@ func TestRecordingAssetConfigInCwd(t *testing.T) {
 	require.NoError(t, err)
 
 	assetConfigPath := path.Join(gitRoot, recordingPath, recordingAssetConfigName)
-	_ = os.Remove(assetConfigPath)
-	defer os.Remove(assetConfigPath)
+	cleanTestFile(t, assetConfigPath)
+	defer cleanTestFile(t, assetConfigPath)
 
 	_, err = os.Create(assetConfigPath)
 	require.NoError(t, err)
@@ -601,8 +606,8 @@ func TestRecordingAssetConfigInCwd(t *testing.T) {
 
 func TestRecordingAssetConfigInParent(t *testing.T) {
 	parentAssetPath := "../" + recordingAssetConfigName
-	_ = os.Remove(parentAssetPath)
-	defer os.Remove(parentAssetPath)
+	cleanTestFile(t, parentAssetPath)
+	defer cleanTestFile(t, parentAssetPath)
 
 	_, err := os.Create(parentAssetPath)
 	require.NoError(t, err)
