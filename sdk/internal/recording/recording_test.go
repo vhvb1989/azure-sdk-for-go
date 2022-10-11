@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -551,27 +552,51 @@ func TestHostAndScheme(t *testing.T) {
 }
 
 func TestRecordingAssetConfigNotExist(t *testing.T) {
-	assetPath, err := getAssetsConfigPath(".", 0)
+	assetPath, err := getAssetsConfigLocation(".")
 	require.NoError(t, err)
-	require.Equal(t, assetPath, "")
+	require.Equal(t, "", assetPath)
 }
 
-func TestRecordingAssetConfigNoGitRepo(t *testing.T) {
-	_, err := getAssetsConfigPath("../../../../", 0)
+func TestGitRoot(t *testing.T) {
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	_, err = getGitRoot(cwd)
+	require.NoError(t, err)
+}
+
+func TestGitRootNotFound(t *testing.T) {
+	_, err := getGitRoot("../../../../")
 	require.Error(t, err)
 }
 
-func TestRecordingAssetConfigInCwd(t *testing.T) {
-	_ = os.Remove(recordingAssetConfigName)
-	defer os.Remove(recordingAssetConfigName)
+func TestRecordingAssetConfigOutOfBounds(t *testing.T) {
+	assetPath, err := getAssetsConfigLocation("../../../../")
+	require.NoError(t, err)
+	require.Equal(t, "", assetPath)
+}
 
-	_, err := os.Create(recordingAssetConfigName)
+func TestRecordingAssetConfigInCwd(t *testing.T) {
+	recordingPath := "sdk/internal/recording"
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	gitRoot, err := getGitRoot(cwd)
+	require.NoError(t, err)
+
+	assetConfigPath := path.Join(gitRoot, recordingPath, recordingAssetConfigName)
+	_ = os.Remove(assetConfigPath)
+	defer os.Remove(assetConfigPath)
+
+	_, err = os.Create(assetConfigPath)
 	require.NoError(t, err)
 	expected, err := filepath.Abs(recordingAssetConfigName)
 	require.NoError(t, err)
 
-	assetPath, err := getAssetsConfigPath(".", 0)
-	require.Equal(t, assetPath, expected)
+	assetPath, err := getAssetsConfigLocation(recordingPath)
+	require.NoError(t, err)
+	require.Equal(t, expected, assetPath)
+	assetPath, err = getAssetsConfigLocation(recordingPath + "/")
+	require.NoError(t, err)
+	require.Equal(t, expected, assetPath)
 }
 
 func TestRecordingAssetConfigInParent(t *testing.T) {
@@ -584,8 +609,9 @@ func TestRecordingAssetConfigInParent(t *testing.T) {
 	expected, err := filepath.Abs(parentAssetPath)
 	require.NoError(t, err)
 
-	assetPath, err := getAssetsConfigPath(".", 0)
-	require.Equal(t, assetPath, expected)
+	assetPath, err := getAssetsConfigLocation("sdk/internal/recording")
+	require.NoError(t, err)
+	require.Equal(t, expected, assetPath)
 }
 
 func TestFindProxyCertLocation(t *testing.T) {

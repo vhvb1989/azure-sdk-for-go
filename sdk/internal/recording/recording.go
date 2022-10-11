@@ -579,15 +579,36 @@ func getTestId(pathToRecordings string, t *testing.T) string {
 	return path.Join(pathToRecordings, "recordings", t.Name()+".json")
 }
 
+func getGitRoot(fromPath string) (string, error) {
+	absPath, err := filepath.Abs(fromPath)
+	if err != nil {
+		return "", err
+	}
+	gitDirectoryPath := path.Join(absPath, ".git")
+
+	if _, err := os.Stat(gitDirectoryPath); err == nil {
+		return absPath, nil
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return "", err
+	}
+
+	parentDir, _ := filepath.Split(strings.TrimRight(absPath, "/"))
+	if len(parentDir) <= 1 {
+		return "", fmt.Errorf("Unable to find git root from '%s'", fromPath)
+	}
+
+	return getGitRoot(parentDir)
+}
+
 // Traverse up from a recording path until an asset config file is found.
-// Stop searching when the root of the git repository or the filesystem root is reached.
+// Stop searching when the root of the git repository is reached.
 // This function assumes the asset config will be located in the service directory or above.
-func getAssetsConfigPath(fromPath string, depth int) (string, error) {
+func findAssetsConfigFile(fromPath string) (string, error) {
 	assetConfigPath := path.Join(fromPath, recordingAssetConfigName)
 	gitDirectoryPath := path.Join(fromPath, ".git")
 
 	if _, err := os.Stat(assetConfigPath); err == nil {
-		return filepath.Abs(assetConfigPath)
+		return assetConfigPath, nil
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return "", err
 	}
@@ -598,16 +619,25 @@ func getAssetsConfigPath(fromPath string, depth int) (string, error) {
 		return "", err
 	}
 
-	// Cludgy failsafe so we don't end up in an infinite loop at root
-	// in edge cases where there is no .git directory to stop execution
-	maxDepth := 7
-	if depth >= maxDepth {
-		return "", fmt.Errorf(
-			"Stopping at search depth of %d parent directories looking for %s or git root",
-			depth, recordingAssetConfigName)
+	parentDir, _ := filepath.Split(strings.TrimRight(fromPath, "/"))
+	// Be defensive here to avoid possible infinite loops at root
+	if len(parentDir) <= 1 {
+		return "", nil
 	}
 
-	return getAssetsConfigPath(path.Join(fromPath, ".."), depth+1)
+	return findAssetsConfigFile(parentDir)
+}
+
+func getAssetsConfigLocation(pathToRecordings string) (string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	gitRoot, err := getGitRoot(cwd)
+	if err != nil {
+		return "", err
+	}
+	return findAssetsConfigFile(path.Join(gitRoot, pathToRecordings))
 }
 
 // Start tells the test proxy to begin accepting requests for a given test
@@ -628,11 +658,7 @@ func Start(t *testing.T, pathToRecordings string, options *RecordingOptions) err
 
 	testId := getTestId(pathToRecordings, t)
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	assetConfigPath, err := getAssetsConfigPath(cwd, 0)
+	assetConfigLocation, err := getAssetsConfigLocation(pathToRecordings)
 	if err != nil {
 		return err
 	}
@@ -646,8 +672,8 @@ func Start(t *testing.T, pathToRecordings string, options *RecordingOptions) err
 
 	req.Header.Set("Content-Type", "application/json")
 	reqBody := map[string]string{"x-recording-file": testId}
-	if assetConfigPath != "" {
-		reqBody["x-recording-assets-file"] = assetConfigPath
+	if assetConfigLocation != "" {
+		reqBody["x-recording-assets-file"] = assetConfigLocation
 	}
 	marshalled, err := json.Marshal(reqBody)
 	if err != nil {
