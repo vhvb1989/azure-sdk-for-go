@@ -589,7 +589,8 @@ func TestRecordingAssetConfigInCwd(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	_, err = os.Create(assetConfigPath)
+	o, err := os.Create(assetConfigPath)
+	o.Close()
 	require.NoError(t, err)
 	expected, err := filepath.Abs(recordingAssetConfigName)
 	require.NoError(t, err)
@@ -610,7 +611,8 @@ func TestRecordingAssetConfigInParent(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	_, err := os.Create(parentAssetPath)
+	o, err := os.Create(parentAssetPath)
+	o.Close()
 	require.NoError(t, err)
 	expected, err := filepath.Abs(parentAssetPath)
 	require.NoError(t, err)
