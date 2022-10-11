@@ -579,8 +579,12 @@ func getTestId(pathToRecordings string, t *testing.T) string {
 	return path.Join(pathToRecordings, "recordings", t.Name()+".json")
 }
 
-func getGitRoot(fromPath string) (string, error) {
+func getGitRoot(fromPath string, i int) (string, error) {
+	if i > 10 {
+		panic("EXCEEDED I")
+	}
 	absPath, err := filepath.Abs(fromPath)
+	fmt.Println("BBP AT: " + absPath)
 	if err != nil {
 		return "", err
 	}
@@ -597,7 +601,7 @@ func getGitRoot(fromPath string) (string, error) {
 		return "", fmt.Errorf("Unable to find git root from '%s'", fromPath)
 	}
 
-	return getGitRoot(parentDir)
+	return getGitRoot(parentDir, i+1)
 }
 
 // Traverse up from a recording path until an asset config file is found.
@@ -633,7 +637,7 @@ func getAssetsConfigLocation(pathToRecordings string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	gitRoot, err := getGitRoot(cwd)
+	gitRoot, err := getGitRoot(cwd, 0)
 	if err != nil {
 		return "", err
 	}
