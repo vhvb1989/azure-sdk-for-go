@@ -608,7 +608,7 @@ func findAssetsConfigFile(fromPath string) (string, error) {
 	gitDirectoryPath := path.Join(fromPath, ".git")
 
 	if _, err := os.Stat(assetConfigPath); err == nil {
-		return assetConfigPath, nil
+		return filepath.Abs(assetConfigPath)
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return "", err
 	}
