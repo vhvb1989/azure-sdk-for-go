@@ -551,12 +551,6 @@ func TestHostAndScheme(t *testing.T) {
 	require.Equal(t, r.host(), "localhost:5000")
 }
 
-func TestRecordingAssetConfigNotExist(t *testing.T) {
-	assetPath, err := getAssetsConfigLocation(".")
-	require.NoError(t, err)
-	require.Equal(t, "", assetPath)
-}
-
 func TestGitRoot(t *testing.T) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
@@ -567,6 +561,12 @@ func TestGitRoot(t *testing.T) {
 func TestGitRootNotFound(t *testing.T) {
 	_, err := getGitRoot("../../../../")
 	require.Error(t, err)
+}
+
+func TestRecordingAssetConfigNotExist(t *testing.T) {
+	assetPath, err := getAssetsConfigLocation(".")
+	require.NoError(t, err)
+	require.Equal(t, "", assetPath)
 }
 
 func TestRecordingAssetConfigOutOfBounds(t *testing.T) {
