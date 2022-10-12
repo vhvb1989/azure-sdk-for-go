@@ -9,6 +9,8 @@ require (
 	github.com/stretchr/testify v1.7.1
 )
 
+replace github.com/Azure/azure-sdk-for-go/sdk/internal => ../../internal
+
 require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
