@@ -592,7 +592,7 @@ func getGitRoot(fromPath string) (string, error) {
 		return "", err
 	}
 
-	trimmedPath := strings.TrimRight(absPath, "/"+string(os.PathSeparator))
+	trimmedPath := strings.TrimRight(absPath, string(os.PathSeparator))
 	parentDir, _ := filepath.Split(trimmedPath)
 	// If the parent directory is the same as current dir, we've reached root
 	if parentDir == trimmedPath {
@@ -625,7 +625,7 @@ func findAssetsConfigFile(fromPath string) (string, error) {
 		return "", err
 	}
 
-	trimmedPath := strings.TrimRight(absPath, "/"+string(os.PathSeparator))
+	trimmedPath := strings.TrimRight(absPath, string(os.PathSeparator))
 	parentDir, _ := filepath.Split(trimmedPath)
 	// If the parent directory is the same as current dir, we've reached root
 	// This shouldn't be hit due to checks in getGitRoot, but it can't hurt to be defensive
