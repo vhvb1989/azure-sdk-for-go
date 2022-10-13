@@ -604,7 +604,6 @@ func getGitRoot(fromPath string) (string, error) {
 
 // Traverse up from a recording path until an asset config file is found.
 // Stop searching when the root of the git repository is reached.
-// This function assumes the asset config will be located in the service directory or above.
 func findAssetsConfigFile(fromPath string) (string, error) {
 	absPath, err := filepath.Abs(fromPath)
 	if err != nil {
@@ -614,7 +613,7 @@ func findAssetsConfigFile(fromPath string) (string, error) {
 	gitDirectoryPath := path.Join(absPath, ".git")
 
 	if _, err := os.Stat(assetConfigPath); err == nil {
-		return filepath.Abs(assetConfigPath)
+		return assetConfigPath, nil
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return "", err
 	}
@@ -645,7 +644,16 @@ func getAssetsConfigLocation(pathToRecordings string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return findAssetsConfigFile(path.Join(gitRoot, pathToRecordings))
+	loc, err := findAssetsConfigFile(path.Join(gitRoot, pathToRecordings))
+	if err != nil {
+		return "", err
+	}
+
+	// Pass a path relative to the git root to test proxy so that paths
+	// can be resolved when the repo root is mounted as a volume in a container
+	loc = strings.Replace(loc, gitRoot, "", 1)
+	loc = strings.TrimLeft(loc, string(os.PathSeparator))
+	return loc, nil
 }
 
 // Start tells the test proxy to begin accepting requests for a given test

@@ -590,17 +590,16 @@ func TestRecordingAssetConfigInCwd(t *testing.T) {
 	}()
 
 	o, err := os.Create(assetConfigPath)
+	require.NoError(t, err)
 	o.Close()
-	require.NoError(t, err)
-	expected, err := filepath.Abs(recordingAssetConfigName)
-	require.NoError(t, err)
 
 	assetPath, err := getAssetsConfigLocation(recordingPath)
 	require.NoError(t, err)
-	require.Equal(t, expected, assetPath)
+	require.Equal(t, recordingPath+"/"+recordingAssetConfigName, assetPath)
+
 	assetPath, err = getAssetsConfigLocation(recordingPath + "/")
 	require.NoError(t, err)
-	require.Equal(t, expected, assetPath)
+	require.Equal(t, recordingPath+"/"+recordingAssetConfigName, assetPath)
 }
 
 func TestRecordingAssetConfigInParent(t *testing.T) {
@@ -612,14 +611,12 @@ func TestRecordingAssetConfigInParent(t *testing.T) {
 	}()
 
 	o, err := os.Create(parentAssetPath)
+	require.NoError(t, err)
 	o.Close()
-	require.NoError(t, err)
-	expected, err := filepath.Abs(parentAssetPath)
-	require.NoError(t, err)
 
 	assetPath, err := getAssetsConfigLocation("sdk/internal/recording")
 	require.NoError(t, err)
-	require.Equal(t, expected, assetPath)
+	require.Equal(t, "sdk/internal/"+recordingAssetConfigName, assetPath)
 }
 
 func TestFindProxyCertLocation(t *testing.T) {
