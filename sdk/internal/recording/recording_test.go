@@ -564,15 +564,17 @@ func TestGitRootNotFound(t *testing.T) {
 }
 
 func TestRecordingAssetConfigNotExist(t *testing.T) {
-	assetPath, err := getAssetsConfigLocation(".")
+	absPath, relPath, err := getAssetsConfigLocation(".")
 	require.NoError(t, err)
-	require.Equal(t, "", assetPath)
+	require.Equal(t, "", absPath)
+	require.Equal(t, "", relPath)
 }
 
 func TestRecordingAssetConfigOutOfBounds(t *testing.T) {
-	assetPath, err := getAssetsConfigLocation("../../../../")
+	absPath, relPath, err := getAssetsConfigLocation("../../../../")
 	require.NoError(t, err)
-	require.Equal(t, "", assetPath)
+	require.Equal(t, "", absPath)
+	require.Equal(t, "", relPath)
 }
 
 func TestRecordingAssetConfigInCwd(t *testing.T) {
@@ -593,17 +595,28 @@ func TestRecordingAssetConfigInCwd(t *testing.T) {
 	require.NoError(t, err)
 	o.Close()
 
-	assetPath, err := getAssetsConfigLocation(recordingPath)
+	absPath, relPath, err := getAssetsConfigLocation(recordingPath)
 	require.NoError(t, err)
-	require.Equal(t, recordingPath+"/"+recordingAssetConfigName, assetPath)
+	expected := recordingPath + "/" + recordingAssetConfigName
+	absPathExpected := path.Join(gitRoot, expected)
+	require.Equal(t, absPathExpected, absPath)
+	require.Equal(t, expected, relPath)
 
-	assetPath, err = getAssetsConfigLocation(recordingPath + "/")
+	absPath, relPath, err = getAssetsConfigLocation(recordingPath + "/")
 	require.NoError(t, err)
-	require.Equal(t, recordingPath+"/"+recordingAssetConfigName, assetPath)
+	expected = recordingPath + "/" + recordingAssetConfigName
+	absPathExpected = path.Join(gitRoot, expected)
+	require.Equal(t, absPathExpected, absPath)
+	require.Equal(t, expected, relPath)
 }
 
 func TestRecordingAssetConfigInParent(t *testing.T) {
 	parentAssetPath := "../" + recordingAssetConfigName
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	gitRoot, err := getGitRoot(cwd)
+	require.NoError(t, err)
+
 	_ = os.Remove(parentAssetPath)
 	defer func() {
 		err := os.Remove(parentAssetPath)
@@ -614,9 +627,13 @@ func TestRecordingAssetConfigInParent(t *testing.T) {
 	require.NoError(t, err)
 	o.Close()
 
-	assetPath, err := getAssetsConfigLocation("sdk/internal/recording")
+	absPath, relPath, err := getAssetsConfigLocation("sdk/internal/recording")
 	require.NoError(t, err)
-	require.Equal(t, "sdk/internal/"+recordingAssetConfigName, assetPath)
+	expected := "sdk/internal/" + recordingAssetConfigName
+	absPathExpected := path.Join(gitRoot, expected)
+	require.NoError(t, err)
+	require.Equal(t, absPathExpected, absPath)
+	require.Equal(t, expected, relPath)
 }
 
 func TestFindProxyCertLocation(t *testing.T) {

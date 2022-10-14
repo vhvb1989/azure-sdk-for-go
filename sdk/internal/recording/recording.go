@@ -635,25 +635,47 @@ func findAssetsConfigFile(fromPath string) (string, error) {
 	return findAssetsConfigFile(parentDir)
 }
 
-func getAssetsConfigLocation(pathToRecordings string) (string, error) {
+// Returns absolute and relative paths to an asset configuration file, or an error.
+func getAssetsConfigLocation(pathToRecordings string) (string, string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	gitRoot, err := getGitRoot(cwd)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	loc, err := findAssetsConfigFile(path.Join(gitRoot, pathToRecordings))
+	abs, err := findAssetsConfigFile(path.Join(gitRoot, pathToRecordings))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Pass a path relative to the git root to test proxy so that paths
 	// can be resolved when the repo root is mounted as a volume in a container
-	loc = strings.Replace(loc, gitRoot, "", 1)
-	loc = strings.TrimLeft(loc, string(os.PathSeparator))
-	return loc, nil
+	rel := strings.Replace(abs, gitRoot, "", 1)
+	rel = strings.TrimLeft(rel, string(os.PathSeparator))
+	return abs, rel, nil
+}
+
+func requestStart(url string, testId string, assetConfigLocation string) (*http.Response, error) {
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	reqBody := map[string]string{"x-recording-file": testId}
+	if assetConfigLocation != "" {
+		reqBody["x-recording-assets-file"] = assetConfigLocation
+	}
+	marshalled, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(bytes.NewReader(marshalled))
+	req.ContentLength = int64(len(marshalled))
+
+	return client.Do(req)
 }
 
 // Start tells the test proxy to begin accepting requests for a given test
@@ -674,34 +696,25 @@ func Start(t *testing.T, pathToRecordings string, options *RecordingOptions) err
 
 	testId := getTestId(pathToRecordings, t)
 
-	assetConfigLocation, err := getAssetsConfigLocation(pathToRecordings)
+	absAssetLocation, relAssetLocation, err := getAssetsConfigLocation(pathToRecordings)
 	if err != nil {
 		return err
 	}
 
 	url := fmt.Sprintf("%s/%s/start", options.baseURL(), recordMode)
 
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		return err
+	var resp *http.Response
+	if absAssetLocation == "" {
+		resp, err = requestStart(url, testId, "")
+		if err != nil {
+			return err
+		}
+	} else if resp, err = requestStart(url, testId, absAssetLocation); err != nil {
+		if resp, err = requestStart(url, testId, relAssetLocation); err != nil {
+			return err
+		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	reqBody := map[string]string{"x-recording-file": testId}
-	if assetConfigLocation != "" {
-		reqBody["x-recording-assets-file"] = assetConfigLocation
-	}
-	marshalled, err := json.Marshal(reqBody)
-	if err != nil {
-		return err
-	}
-	req.Body = io.NopCloser(bytes.NewReader(marshalled))
-	req.ContentLength = int64(len(marshalled))
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
 	recId := resp.Header.Get(IDHeader)
 	if recId == "" {
 		b, err := io.ReadAll(resp.Body)
