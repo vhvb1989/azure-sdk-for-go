@@ -12,7 +12,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -597,8 +596,8 @@ func TestRecordingAssetConfig(t *testing.T) {
 
 		absPath, relPath, err := getAssetsConfigLocation(c.searchDirectory)
 		require.NoError(t, err)
-		expected := c.expectedDirectory + "/" + recordingAssetConfigName
-		absPathExpected := path.Join(gitRoot, expected)
+		expected := c.expectedDirectory + string(os.PathSeparator) + recordingAssetConfigName
+		absPathExpected := filepath.Join(gitRoot, expected)
 		require.Equal(t, absPathExpected, absPath)
 		require.Equal(t, expected, relPath)
 

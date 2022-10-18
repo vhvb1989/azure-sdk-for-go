@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -576,7 +575,7 @@ func (r RecordingOptions) baseURL() string {
 }
 
 func getTestId(pathToRecordings string, t *testing.T) string {
-	return path.Join(pathToRecordings, "recordings", t.Name()+".json")
+	return filepath.Join(pathToRecordings, "recordings", t.Name()+".json")
 }
 
 func getGitRoot(fromPath string) (string, error) {
@@ -601,8 +600,8 @@ func findAssetsConfigFile(fromPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	assetConfigPath := path.Join(absPath, recordingAssetConfigName)
-	gitDirectoryPath := path.Join(absPath, ".git")
+	assetConfigPath := filepath.Join(absPath, recordingAssetConfigName)
+	gitDirectoryPath := filepath.Join(absPath, ".git")
 
 	if _, err := os.Stat(assetConfigPath); err == nil {
 		return assetConfigPath, nil
@@ -637,7 +636,7 @@ func getAssetsConfigLocation(pathToRecordings string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	abs, err := findAssetsConfigFile(path.Join(gitRoot, pathToRecordings))
+	abs, err := findAssetsConfigFile(filepath.Join(gitRoot, pathToRecordings))
 	if err != nil {
 		return "", "", err
 	}
