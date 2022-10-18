@@ -595,14 +595,16 @@ func TestRecordingAssetConfig(t *testing.T) {
 		o.Close()
 
 		absPath, relPath, err := getAssetsConfigLocation(c.searchDirectory)
+		// Clean up first in case of an assertion panic
+		require.NoError(t, os.Remove(c.testFileLocation))
 		require.NoError(t, err)
+
 		expected := c.expectedDirectory + string(os.PathSeparator) + recordingAssetConfigName
-		absPathExpected := filepath.Join(gitRoot, expected)
-		require.Equal(t, absPathExpected, absPath)
+		expected = strings.ReplaceAll(expected, "/", string(os.PathSeparator))
 		require.Equal(t, expected, relPath)
 
-		err = os.Remove(c.testFileLocation)
-		require.NoError(t, err)
+		absPathExpected := filepath.Join(gitRoot, expected)
+		require.Equal(t, absPathExpected, absPath)
 	}
 }
 
