@@ -590,7 +590,9 @@ func getGitRoot(fromPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Unable to find git root for path '%s'", absPath)
 	}
-	return strings.TrimSpace(bytes.NewBuffer(root).String()), nil
+
+	// Wrap with Abs() to get os-specific path separators to support sub-path matching
+	return filepath.Abs(strings.TrimSpace(bytes.NewBuffer(root).String()))
 }
 
 // Traverse up from a recording path until an asset config file is found.
