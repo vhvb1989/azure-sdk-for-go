@@ -37,10 +37,11 @@ function Get-GoModuleVersionInfo($modPath)
 function Get-GoModuleProperties($goModPath)
 {
   $goModPath = $goModPath -replace "\\", "/"
-  if ($goModPath -match "(?<modPath>sdk/(?<serviceDir>(resourcemanager/)?([^/]+/)?(?<modName>[^/]+$)))")
+  # We should keep this regex in sync with what is in the azure-sdk repo at https://github.com/Azure/azure-sdk/blob/main/eng/scripts/Query-Azure-Packages.ps1#L227
+  if ($goModPath -match "(?<modPath>sdk/(?<serviceDir>(resourcemanager/)?(.+/)?(?<modName>[^/]+$)))")
   {
     $modPath = $matches["modPath"]
-    $modName = $matches["modName"] # We may need to start readong this from the go.mod file if the path and mod config start to differ
+    $modName = $matches["modName"] # We may need to start reading this from the go.mod file if the path and mod config start to differ
     $serviceDir = $matches["serviceDir"]
     $sdkType = "client"
     if ($modName.StartsWith("arm") -or $modPath.Contains("resourcemanager")) { $sdkType = "mgmt" }
