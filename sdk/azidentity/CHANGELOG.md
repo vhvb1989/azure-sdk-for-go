@@ -28,6 +28,11 @@
   options types for these credentials have an `AdditionallyAllowedTenants` field
   that specifies additional tenants in which the credential may authenticate.
 
+## 1.2.1 (2023-01-26)
+
+### Other Changes
+* Upgrade MSAL to v0.8.1
+
 ## 1.3.0-beta.2 (2023-01-10)
 
 ### Features Added
