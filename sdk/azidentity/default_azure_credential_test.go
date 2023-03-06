@@ -8,6 +8,7 @@ package azidentity
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -176,12 +177,17 @@ func (p *delayPolicy) Do(req *policy.Request) (resp *http.Response, err error) {
 }
 
 func TestDefaultAzureCredential_timeoutWrapper(t *testing.T) {
+	log.SetListener(func(e log.Event, s string) {
+		if e == EventAuthentication {
+			t.Log(s)
+		}
+	})
 	srv, close := mock.NewServer(mock.WithTransformAllRequestsToTestServerUrl())
 	defer close()
 	srv.SetResponse(mock.WithBody(accessTokenRespSuccess))
 
 	timeout := 5 * time.Millisecond
-	dp := delayPolicy{2 * timeout}
+	dp := delayPolicy{5 * timeout}
 	mic, err := NewManagedIdentityCredential(&ManagedIdentityCredentialOptions{
 		ClientOptions: policy.ClientOptions{
 			PerCallPolicies: []policy.Policy{&dp},
@@ -200,8 +206,9 @@ func TestDefaultAzureCredential_timeoutWrapper(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		// expecting credentialUnavailableError because delay exceeds the wrapper's timeout
 		_, err = chain.GetToken(context.Background(), policy.TokenRequestOptions{Scopes: []string{liveTestScope}})
-		if _, ok := err.(*credentialUnavailableError); !ok {
-			t.Fatalf("expected credentialUnavailableError, got %v", err)
+		var e *credentialUnavailableError
+		if !errors.As(err, &e) {
+			t.Fatalf("expected credentialUnavailableError on iteration %d, got %T: %q", i+1, err, err.Error())
 		}
 	}
 

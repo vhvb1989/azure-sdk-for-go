@@ -182,6 +182,9 @@ func (w *timeoutWrapper) GetToken(ctx context.Context, opts policy.TokenRequestO
 		c, cancel := context.WithTimeout(ctx, w.timeout)
 		defer cancel()
 		tk, err = w.mic.GetToken(c, opts)
+		if err != nil {
+			log.Writef(EventAuthentication, "wrapper received %T\n", err)
+		}
 		if ce := c.Err(); errors.Is(ce, context.DeadlineExceeded) {
 			err = newCredentialUnavailableError(credNameManagedIdentity, "managed identity timed out")
 		} else {
