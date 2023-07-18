@@ -73,13 +73,13 @@ steps:
       arguments: '${{ parameters.ServiceDirectory }}'
       pwsh: true
 
-  # re-enable with log output from standalone proxies
-  # - ${{ if eq(parameters.TestProxy, true) }}:
-  #   - pwsh: |
-  #       # $(Build.SourcesDirectory)/test-proxy.log is the hardcoded output log location for the test-proxy-tool.yml
-  #       cat $(Build.SourcesDirectory)/test-proxy.log
-  #     displayName: 'Dump Test Proxy logs'
-  #     condition: succeededOrFailed()
+  - ${{ if eq(parameters.TestProxy, true) }}:
+    - pwsh: |
+        $tmp = $env:TEMP ? $env:TEMP : [System.IO.Path]::GetTempPath()
+        $logs = Join-Path $tmp 'test-proxy.log.*'
+        Get-ChildItem $logs | ForEach-Object { echo 'Logs for $_'; cat $_ }
+      displayName: 'Dump Test Proxy logs'
+      condition: succeededOrFailed()
 
   - ${{if eq(variables['System.TeamProject'], 'internal') }}:
     - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
