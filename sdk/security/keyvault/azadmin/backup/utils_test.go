@@ -29,10 +29,10 @@ const fakeToken = "fakeSasToken"
 
 var (
 	pathToRecordings = "sdk/security/keyvault/azadmin/testdata"
-	credential azcore.TokenCredential
-	hsmURL     string
-	token      string
-	blobURL    string
+	credential       azcore.TokenCredential
+	hsmURL           string
+	token            string
+	blobURL          string
 )
 
 func TestMain(m *testing.M) {

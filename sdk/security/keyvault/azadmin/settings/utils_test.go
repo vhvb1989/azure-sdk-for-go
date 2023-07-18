@@ -27,8 +27,8 @@ const fakeHsmURL = "https://fakehsm.managedhsm.azure.net/"
 
 var (
 	pathToRecordings = "sdk/security/keyvault/azadmin/testdata"
-	credential azcore.TokenCredential
-	hsmURL     string
+	credential       azcore.TokenCredential
+	hsmURL           string
 )
 
 func TestMain(m *testing.M) {
