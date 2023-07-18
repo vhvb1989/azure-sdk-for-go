@@ -89,7 +89,7 @@ steps:
 
         ls -R $(Build.SourcesDirectory)/.assets
         cd $(Build.SourcesDirectory)/.assets
-        Get-ChildItem $(Build.SourcesDirectory/.assets | ForEach-Object { echo $_; Push-Location $_; git status; Pop-Location }
+        Get-ChildItem $(Build.SourcesDirectory)/.assets | ForEach-Object { echo $_; Push-Location $_; git status; Pop-Location }
       displayName: 'Dump Test Proxy logs'
       condition: succeededOrFailed()
 
