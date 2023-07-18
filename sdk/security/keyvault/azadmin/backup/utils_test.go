@@ -28,6 +28,7 @@ const fakeBlobURL = "https://fakestorageaccount.blob.core.windows.net/backup"
 const fakeToken = "fakeSasToken"
 
 var (
+	pathToRecordings = "sdk/security/keyvault/azadmin/testdata"
 	credential azcore.TokenCredential
 	hsmURL     string
 	token      string
@@ -59,7 +60,7 @@ func TestMain(m *testing.M) {
 		token = fakeToken
 	}
 
-	proxy, err := recording.StartTestProxy(nil)
+	proxy, err := recording.StartTestProxy(pathToRecordings, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -110,7 +111,7 @@ func TestMain(m *testing.M) {
 }
 
 func startRecording(t *testing.T) {
-	err := recording.Start(t, "sdk/security/keyvault/azadmin/testdata", nil)
+	err := recording.Start(t, pathToRecordings, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := recording.Stop(t, nil)

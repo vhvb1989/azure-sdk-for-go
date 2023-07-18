@@ -148,7 +148,18 @@ func restoreRecordings(proxyPath string, pathToRecordings string) error {
 	if pathToRecordings == "" {
 		return nil
 	}
-	cmd := exec.Command(proxyPath, "restore", "-a", pathToRecordings)
+	absAssetLocation, _, err := getAssetsConfigLocation(pathToRecordings)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Running test proxy command: %s restore -a %s\n", proxyPath, absAssetLocation)
+	cmd := exec.Command(proxyPath, "restore", "-a", absAssetLocation)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		return err
+	}
 	return cmd.Wait()
 }
 
@@ -190,7 +201,7 @@ func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir st
 		installedVersion := "1.0.0-dev." + strings.TrimSpace(string(out))
 		if installedVersion == proxyVersion {
 			log.Printf("Test proxy version %s already installed\n", proxyVersion)
-			return nil
+			return restoreRecordings(proxyPath, pathToRecordings)
 		} else {
 			log.Printf("Test proxy version %s does not match required version %s\n",
 						installedVersion, proxyVersion)
