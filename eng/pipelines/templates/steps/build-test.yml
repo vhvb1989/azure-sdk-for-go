@@ -51,11 +51,6 @@ steps:
     displayName: "Install Coverage and Junit Dependencies"
     retryCountOnTaskFailure: 3
 
-  - ${{ if eq(parameters.TestProxy, true) }}:
-    - template: /eng/common/testproxy/test-proxy-tool.yml
-      parameters:
-        targetVersion: '1.0.0-dev.20230427.1'
-
   - task: PowerShell@2
     displayName: 'Run Tests'
     inputs:
@@ -78,12 +73,13 @@ steps:
       arguments: '${{ parameters.ServiceDirectory }}'
       pwsh: true
 
-  - ${{ if eq(parameters.TestProxy, true) }}:
-    - pwsh: |
-        # $(Build.SourcesDirectory)/test-proxy.log is the hardcoded output log location for the test-proxy-tool.yml
-        cat $(Build.SourcesDirectory)/test-proxy.log
-      displayName: 'Dump Test Proxy logs'
-      condition: succeededOrFailed()
+  # re-enable with log output from standalone proxies
+  # - ${{ if eq(parameters.TestProxy, true) }}:
+  #   - pwsh: |
+  #       # $(Build.SourcesDirectory)/test-proxy.log is the hardcoded output log location for the test-proxy-tool.yml
+  #       cat $(Build.SourcesDirectory)/test-proxy.log
+  #     displayName: 'Dump Test Proxy logs'
+  #     condition: succeededOrFailed()
 
   - ${{if eq(variables['System.TeamProject'], 'internal') }}:
     - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
