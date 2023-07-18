@@ -76,7 +76,7 @@ steps:
   - ${{ if eq(parameters.TestProxy, true) }}:
     - pwsh: |
         $tmp = $env:TEMP ? $env:TEMP : [System.IO.Path]::GetTempPath()
-        $logs = Join-Path $tmp 'test-proxy.log.*'
+        $logs = Join-Path $tmp 'testproxy.log.*'
         Get-ChildItem $logs | ForEach-Object { echo 'Logs for $_'; cat $_ }
       displayName: 'Dump Test Proxy logs'
       condition: succeededOrFailed()
