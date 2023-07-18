@@ -59,7 +59,12 @@ func TestMain(m *testing.M) {
 		token = fakeToken
 	}
 
-	err := recording.ResetProxy(nil)
+	proxy, err := recording.StartTestProxy(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	err = recording.ResetProxy(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -95,6 +100,12 @@ func TestMain(m *testing.M) {
 		}()
 	}
 	code := m.Run()
+
+	err = recording.StopTestProxy(proxy)
+	if err != nil {
+		panic(err)
+	}
+
 	os.Exit(code)
 }
 
