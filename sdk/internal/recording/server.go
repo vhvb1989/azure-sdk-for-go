@@ -258,6 +258,12 @@ func getProxyVersion(gitRoot string) (string, error) {
 	return proxyVersion, nil
 }
 
+func setTestProxyEnv(gitRoot string) {
+	devCertPath := filepath.Join(gitRoot, "eng/common/testproxy/dotnet-devcert.pfx")
+	os.Setenv("ASPNETCORE_Kestrel__Certificates__Default__Path", devCertPath)
+	os.Setenv("ASPNETCORE_Kestrel__Certificates__Default__Password", "password")
+}
+
 func StartTestProxy(options *RecordingOptions) (*TestProxyInstance, error) {
 	manualStart := strings.ToLower(os.Getenv("PROXY_MANUAL_START"))
 	if manualStart == "true" {
@@ -295,6 +301,8 @@ func StartTestProxy(options *RecordingOptions) (*TestProxyInstance, error) {
 		return nil, err
 	}
 	defer proxyLog.Close()
+
+	setTestProxyEnv(gitRoot)
 
 	if options == nil {
 		options = defaultOptions()
