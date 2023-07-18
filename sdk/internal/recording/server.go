@@ -144,7 +144,15 @@ func extractTestProxy(archivePath string, outputDir string) error {
 	}
 }
 
-func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir string) error {
+func restoreRecordings(proxyPath string, pathToRecordings string) error {
+	if pathToRecordings == "" {
+		return nil
+	}
+	cmd := exec.Command(proxyPath, "restore", "-a", pathToRecordings)
+	return cmd.Wait()
+}
+
+func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir string, pathToRecordings string) error {
 	lockFile := filepath.Join(os.TempDir(), "test-proxy-install.lock")
 	maxTries := 600  // Wait 1 minute
 	var i int
@@ -229,7 +237,7 @@ func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir st
 		return err
 	}
 
-	return nil
+	return restoreRecordings(proxyPath, pathToRecordings)
 }
 
 func getProxyLog() (*os.File, error) {
@@ -264,7 +272,7 @@ func setTestProxyEnv(gitRoot string) {
 	os.Setenv("ASPNETCORE_Kestrel__Certificates__Default__Password", "password")
 }
 
-func StartTestProxy(options *RecordingOptions) (*TestProxyInstance, error) {
+func StartTestProxy(pathToRecordings string, options *RecordingOptions) (*TestProxyInstance, error) {
 	manualStart := strings.ToLower(os.Getenv("PROXY_MANUAL_START"))
 	if manualStart == "true" {
 		log.Println("PROXY_MANUAL_START env variable is set to true, not starting test proxy...")
@@ -291,7 +299,10 @@ func StartTestProxy(options *RecordingOptions) (*TestProxyInstance, error) {
 	}
 
     proxyPath := filepath.Join(proxyDir, "Azure.Sdk.Tools.TestProxy")
-	err = ensureTestProxyInstalled(proxyVersion, proxyPath, proxyDir)
+	if runtime.GOOS == "windows" {
+		proxyPath += ".exe"
+	}
+	err = ensureTestProxyInstalled(proxyVersion, proxyPath, proxyDir, pathToRecordings)
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ import (
 )
 
 func TestRecordingHTTPClient_Do(t *testing.T) {
-	proxy, err := recording.StartTestProxy(nil)
+	proxy, err := recording.StartTestProxy("", nil)
 	require.NoError(t, err)
 	defer func() {
 		err := recording.StopTestProxy(proxy)

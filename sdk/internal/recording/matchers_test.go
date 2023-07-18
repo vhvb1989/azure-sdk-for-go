@@ -26,7 +26,7 @@ func TestMatchers(t *testing.T) {
 }
 
 func (s *matchersTests) SetupSuite() {
-	proxy, err := StartTestProxy(nil)
+	proxy, err := StartTestProxy("", nil)
 	s.proxy = proxy
 	require.NoError(s.T(), err)
 }

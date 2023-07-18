@@ -58,14 +58,14 @@ func (s *serverTests) TestEnsureTestProxyInstalled() {
     proxyPath := filepath.Join(proxyDir, "Azure.Sdk.Tools.TestProxy")
 
 	// Test download proxy
-	ensureTestProxyInstalled(proxyVersion, proxyPath, proxyDir)
+	ensureTestProxyInstalled(proxyVersion, proxyPath, proxyDir, "")
 	require.NoError(s.T(), err)
 
 	stat1, err := os.Stat(proxyPath)
 	require.NoError(s.T(), err)
 
 	// Test cached proxy
-	ensureTestProxyInstalled(proxyVersion, proxyPath, proxyDir)
+	ensureTestProxyInstalled(proxyVersion, proxyPath, proxyDir, "")
 	require.NoError(s.T(), err)
 
 	stat2, err := os.Stat(proxyPath)
