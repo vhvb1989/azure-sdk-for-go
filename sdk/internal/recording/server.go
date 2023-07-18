@@ -239,7 +239,7 @@ func getProxyLog() (*os.File, error) {
 	for i := range suffix {
 		suffix[i] = letters[rand.Intn(len(letters))]
 	}
-	proxyLogName := fmt.Sprintf("testproxy.log.%s", suffix)
+	proxyLogName := fmt.Sprintf("test-proxy.log.%s", suffix)
 	proxyLog, err := os.Create(filepath.Join(os.TempDir(), proxyLogName))
 	if err != nil {
 		return nil, err
@@ -317,9 +317,15 @@ func StartTestProxy(options *RecordingOptions) (*TestProxyInstance, error) {
 		done <- cmd.Wait()
 	}()
 
+
+	sleep := 2
+	// Extend sleep time in devops pipeline, proxy takes longer to start up
+	if os.Getenv("SYSTEM_TEAMPROJECTID") != "" {
+		sleep = 15
+	}
 	// Give background test proxy instance time to start up
-	log.Println("Waiting 15 seconds for test-proxy to start...")
-	time.Sleep(15 * time.Second)
+	log.Printf("Waiting %d seconds for test-proxy to start...\n", sleep)
+	time.Sleep(time.Duration(sleep) * time.Second)
 	if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
 		return nil, fmt.Errorf("test proxy instance failed to start in the allotted time")
 	}
