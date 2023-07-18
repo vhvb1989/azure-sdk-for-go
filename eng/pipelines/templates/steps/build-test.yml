@@ -84,6 +84,12 @@ steps:
         $tmp = $env:TEMP ? $env:TEMP : [System.IO.Path]::GetTempPath()
         $logs = Join-Path $tmp 'test-proxy.log.*'
         Get-ChildItem $logs | ForEach-Object { echo 'Logs for $_'; cat $_ }
+
+        Write-Host "BBP DEBUG"
+
+        ls -R $(Build.SourcesDirectory)/.assets
+        cd $(Build.SourcesDirectory)/.assets
+        Get-ChildItem $(Build.SourcesDirectory/.assets | ForEach-Object { echo $_; Push-Location $_; git status; Pop-Location }
       displayName: 'Dump Test Proxy logs'
       condition: succeededOrFailed()
 
