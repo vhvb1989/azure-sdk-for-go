@@ -318,7 +318,8 @@ func StartTestProxy(options *RecordingOptions) (*TestProxyInstance, error) {
 	}()
 
 	// Give background test proxy instance time to start up
-	time.Sleep(2 * time.Second)
+	log.Println("Waiting 15 seconds for test-proxy to start...")
+	time.Sleep(15 * time.Second)
 	if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
 		return nil, fmt.Errorf("test proxy instance failed to start in the allotted time")
 	}
