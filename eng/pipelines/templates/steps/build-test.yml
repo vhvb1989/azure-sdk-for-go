@@ -51,6 +51,12 @@ steps:
     displayName: "Install Coverage and Junit Dependencies"
     retryCountOnTaskFailure: 3
 
+  - ${{ if eq(parameters.TestProxy, true) }}:
+    - template: /eng/common/testproxy/test-proxy-tool.yml
+      parameters:
+        targetVersion: '1.0.0-dev.20230714.2'
+        runProxy: false
+
   - task: PowerShell@2
     displayName: 'Run Tests'
     inputs:
