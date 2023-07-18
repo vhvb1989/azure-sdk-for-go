@@ -2,12 +2,9 @@ module github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azadmin
 
 go 1.18
 
-replace github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 => /home/ben/sdk/azure-sdk-for-go/sdk/internal
-
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v0.11.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v0.8.0
 	github.com/google/uuid v1.3.0
@@ -15,6 +12,7 @@ require (
 )
 
 require (
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.1-0.20230718193144-1e177e81ab79 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dnaeon/go-vcr v1.2.0 // indirect
