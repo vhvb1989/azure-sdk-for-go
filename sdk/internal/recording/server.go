@@ -19,13 +19,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"runtime"
+	"strings"
 	"time"
 )
 
 type TestProxyInstance struct {
-	Cmd *exec.Cmd
+	Cmd     *exec.Cmd
 	Options *RecordingOptions
 }
 
@@ -48,39 +48,39 @@ func getTestProxyDownloadFile() (string, error) {
 }
 
 func extractTestProxyZip(archivePath string, outputDir string) error {
-    // Open the zip file
-    r, err := zip.OpenReader(archivePath)
-    if err != nil {
-        return err
-    }
-    defer r.Close()
+	// Open the zip file
+	r, err := zip.OpenReader(archivePath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
 
-    for _, f := range r.File {
-        targetPath := filepath.Join(outputDir, f.Name)
+	for _, f := range r.File {
+		targetPath := filepath.Join(outputDir, f.Name)
 
-        log.Println("Extracting", targetPath)
+		log.Println("Extracting", targetPath)
 
-        if f.FileInfo().IsDir() {
-            os.MkdirAll(targetPath, f.Mode())
-            continue
-        }
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(targetPath, f.Mode())
+			continue
+		}
 
-        file, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-        if err != nil {
-            return err
-        }
-        defer file.Close()
+		file, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+		defer file.Close()
 
-        rc, err := f.Open()
-        if err != nil {
-            return err
-        }
-        defer rc.Close()
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
 
-        if _, err = io.Copy(file, rc); err != nil {
-            return err
-        }
-    }
+		if _, err = io.Copy(file, rc); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -89,48 +89,48 @@ func extractTestProxyArchive(archivePath string, outputDir string) error {
 	log.Printf("Extracting %s\n", archivePath)
 	file, err := os.Open(archivePath)
 	if err != nil {
-        return err
-    }
-    defer file.Close()
+		return err
+	}
+	defer file.Close()
 	gzipReader, err := gzip.NewReader(file)
-    if err != nil {
-        return err
-    }
-    defer gzipReader.Close()
+	if err != nil {
+		return err
+	}
+	defer gzipReader.Close()
 
 	tarReader := tar.NewReader(gzipReader)
 
 	for {
-        header, err := tarReader.Next()
-        if err == io.EOF {
-            break
-        }
-        if err != nil {
-            return err
-        }
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
 
-        targetPath := filepath.Join(outputDir, header.Name)
+		targetPath := filepath.Join(outputDir, header.Name)
 
-        log.Println("Extracting", targetPath)
+		log.Println("Extracting", targetPath)
 
-        switch header.Typeflag {
-        case tar.TypeDir:
-            if err := os.MkdirAll(targetPath, 0755); err != nil {
-                return err
-            }
-        case tar.TypeReg:
-            file, err := os.Create(targetPath)
-            if err != nil {
-                return err
-            }
-            defer file.Close()
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(targetPath, 0755); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			file, err := os.Create(targetPath)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
 
-            if _, err := io.Copy(file, tarReader); err != nil {
-                return err
-            }
-        default:
-            log.Printf("Unable to extract type %c in file %s\n", header.Typeflag, header.Name)
-        }
+			if _, err := io.Copy(file, tarReader); err != nil {
+				return err
+			}
+		default:
+			log.Printf("Unable to extract type %c in file %s\n", header.Typeflag, header.Name)
+		}
 	}
 
 	return nil
@@ -165,7 +165,8 @@ func restoreRecordings(proxyPath string, pathToRecordings string) error {
 
 func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir string, pathToRecordings string) error {
 	lockFile := filepath.Join(os.TempDir(), "test-proxy-install.lock")
-	maxTries := 600  // Wait 1 minute
+	log.Printf("Waiting to acquire test proxy install lock %s\n", lockFile)
+	maxTries := 600 // Wait 1 minute
 	var i int
 	for i = 0; i < maxTries; i++ {
 		lock, err := os.OpenFile(lockFile, os.O_CREATE|os.O_EXCL, 0600)
@@ -193,8 +194,8 @@ func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir st
 	}
 
 	cmd := exec.Command(proxyPath, "--version")
-    out, err := cmd.Output()
-    if err != nil {
+	out, err := cmd.Output()
+	if err != nil {
 		log.Printf("Test proxy not detected at %s, downloading...\n", proxyPath)
 	} else {
 		// TODO: fix proxy CLI tool versioning output to match the actual version we download
@@ -204,7 +205,7 @@ func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir st
 			return restoreRecordings(proxyPath, pathToRecordings)
 		} else {
 			log.Printf("Test proxy version %s does not match required version %s\n",
-						installedVersion, proxyVersion)
+				installedVersion, proxyVersion)
 		}
 	}
 
@@ -214,26 +215,26 @@ func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir st
 	}
 
 	proxyDownloadPath := filepath.Join(proxyDir, proxyFile)
-    archive, err := os.Create(proxyDownloadPath)
-    if err != nil {
-        return err
-    }
-    defer archive.Close()
+	archive, err := os.Create(proxyDownloadPath)
+	if err != nil {
+		return err
+	}
+	defer archive.Close()
 
 	log.Printf("Downloading test proxy version %s to %s for %s/%s\n",
-				proxyVersion, proxyPath, runtime.GOOS, runtime.GOARCH)
+		proxyVersion, proxyPath, runtime.GOOS, runtime.GOARCH)
 	proxyUrl := fmt.Sprintf("https://github.com/Azure/azure-sdk-tools/releases/download/Azure.Sdk.Tools.TestProxy_%s/%s",
-							 proxyVersion, proxyFile)
-    resp, err := http.Get(proxyUrl)
-    if err != nil {
-        return err
-    }
-    defer resp.Body.Close()
+		proxyVersion, proxyFile)
+	resp, err := http.Get(proxyUrl)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-    _, err = io.Copy(archive, resp.Body)
-    if err != nil {
-        return err
-    }
+	_, err = io.Copy(archive, resp.Body)
+	if err != nil {
+		return err
+	}
 
 	err = extractTestProxy(proxyDownloadPath, proxyDir)
 	if err != nil {
@@ -283,6 +284,37 @@ func setTestProxyEnv(gitRoot string) {
 	os.Setenv("ASPNETCORE_Kestrel__Certificates__Default__Password", "password")
 }
 
+func waitForProxyStart(cmd *exec.Cmd, options *RecordingOptions) (*TestProxyInstance, error) {
+	maxTries := 50
+	// Extend sleep time in devops pipeline, proxy takes longer to start up
+	if os.Getenv("SYSTEM_TEAMPROJECTID") != "" {
+		maxTries = 200
+	}
+	log.Printf("Started test proxy instance (PID %d) on %s\n", cmd.Process.Pid, options.baseURL())
+	client, _ := GetHTTPClient(nil)
+	client.Timeout = 1 * time.Second
+
+	log.Printf("Waiting up to %d seconds for test-proxy server to respond...\n", (maxTries / 10))
+	var i int
+	for i = 0; i < maxTries; i++ {
+		uri := fmt.Sprintf("https://localhost:%d/Admin/IsAlive", options.ProxyPort)
+		req, _ := http.NewRequest("GET", uri, nil)
+		req.Close = true
+
+		resp, err := client.Do(req)
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		return &TestProxyInstance{Cmd: cmd, Options: options}, nil
+	}
+
+	return nil, fmt.Errorf("test proxy server did not become available in the allotted time")
+}
+
 func StartTestProxy(pathToRecordings string, options *RecordingOptions) (*TestProxyInstance, error) {
 	manualStart := strings.ToLower(os.Getenv("PROXY_MANUAL_START"))
 	if manualStart == "true" {
@@ -303,13 +335,11 @@ func StartTestProxy(pathToRecordings string, options *RecordingOptions) (*TestPr
 	if err != nil {
 		return nil, err
 	}
-
 	proxyDir := filepath.Join(gitRoot, ".proxy")
 	if err := os.MkdirAll(proxyDir, 0755); err != nil {
 		return nil, err
 	}
-
-    proxyPath := filepath.Join(proxyDir, "Azure.Sdk.Tools.TestProxy")
+	proxyPath := filepath.Join(proxyDir, "Azure.Sdk.Tools.TestProxy")
 	if runtime.GOOS == "windows" {
 		proxyPath += ".exe"
 	}
@@ -330,10 +360,10 @@ func StartTestProxy(pathToRecordings string, options *RecordingOptions) (*TestPr
 		options = defaultOptions()
 	}
 	log.Printf("Running test proxy command: %s start --storage-location %s -- --urls=%s\n",
-				proxyPath, gitRoot, options.baseURL())
+		proxyPath, gitRoot, options.baseURL())
 	log.Printf("Test proxy log location: %s\n", proxyLog.Name())
 	cmd := exec.Command(
-		proxyPath, "start", "--storage-location", gitRoot, "--", "--urls=" + options.baseURL())
+		proxyPath, "start", "--storage-location", gitRoot, "--", "--urls="+options.baseURL())
 
 	cmd.Stdout = proxyLog
 	cmd.Stderr = proxyLog
@@ -347,21 +377,7 @@ func StartTestProxy(pathToRecordings string, options *RecordingOptions) (*TestPr
 		done <- cmd.Wait()
 	}()
 
-
-	sleep := 2
-	// Extend sleep time in devops pipeline, proxy takes longer to start up
-	if os.Getenv("SYSTEM_TEAMPROJECTID") != "" {
-		sleep = 15
-	}
-	// Give background test proxy instance time to start up
-	log.Printf("Waiting %d seconds for test-proxy to start...\n", sleep)
-	time.Sleep(time.Duration(sleep) * time.Second)
-	if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-		return nil, fmt.Errorf("test proxy instance failed to start in the allotted time")
-	}
-	log.Printf("Started test proxy instance (PID %d) on %s\n", cmd.Process.Pid, options.baseURL())
-
-	return &TestProxyInstance{Cmd: cmd, Options: options}, nil
+	return waitForProxyStart(cmd, options)
 }
 
 // NOTE: The process will be killed if the user hits ctrl-c mid-way through tests, as go will
