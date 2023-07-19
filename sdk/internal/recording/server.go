@@ -53,7 +53,13 @@ func extractTestProxyZip(archivePath string, outputDir string) error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	defer func() {
+		r.Close()
+		if err != nil {
+			fmt.Println("Error closing reader:", err)
+			panic(err)
+		}
+	}()
 
 	for _, f := range r.File {
 		targetPath := filepath.Join(outputDir, f.Name)
@@ -69,13 +75,25 @@ func extractTestProxyZip(archivePath string, outputDir string) error {
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer func() {
+			file.Close()
+			if err != nil {
+				fmt.Println("Error closing file:", err)
+				panic(err)
+			}
+		}()
 
 		rc, err := f.Open()
 		if err != nil {
 			return err
 		}
-		defer rc.Close()
+		defer func() {
+			err := rc.Close()
+			if err != nil {
+				fmt.Println("Error closing rc:", err)
+				panic(err)
+			}
+		}()
 
 		if _, err = io.Copy(file, rc); err != nil {
 			return err
