@@ -9,6 +9,7 @@ package recording
 import (
 	"archive/zip"
 	"os"
+	"runtime"
 	"path/filepath"
 	"testing"
 
@@ -56,6 +57,9 @@ func (s *serverTests) TestEnsureTestProxyInstalled() {
 	require.NoError(s.T(), err)
 
     proxyPath := filepath.Join(proxyDir, "Azure.Sdk.Tools.TestProxy")
+	if runtime.GOOS == "windows" {
+		proxyPath += ".exe"
+	}
 
 	// Test download proxy
 	ensureTestProxyInstalled(proxyVersion, proxyPath, proxyDir, "")

@@ -47,55 +47,66 @@ func getTestProxyDownloadFile() (string, error) {
 	}
 }
 
-func extractTestProxyZip(archivePath string, outputDir string) error {
-	// Open the zip file
-	r, err := zip.OpenReader(archivePath)
+// Modified from https://stackoverflow.com/a/24792688
+func extractTestProxyZip(src string, dest string) error {
+	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		r.Close()
-		if err != nil {
-			fmt.Println("Error closing reader:", err)
+		if err := r.Close(); err != nil {
 			panic(err)
 		}
 	}()
 
-	for _, f := range r.File {
-		targetPath := filepath.Join(outputDir, f.Name)
+	os.MkdirAll(dest, 0755)
 
-		log.Println("Extracting", targetPath)
-
-		if f.FileInfo().IsDir() {
-			os.MkdirAll(targetPath, f.Mode())
-			continue
-		}
-
-		file, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-		if err != nil {
-			return err
-		}
-		defer func() {
-			file.Close()
-			if err != nil {
-				fmt.Println("Error closing file:", err)
-				panic(err)
-			}
-		}()
-
+	// Closure to address file descriptors issue with all the deferred .Close() methods
+	extractAndWriteFile := func(f *zip.File) error {
 		rc, err := f.Open()
 		if err != nil {
 			return err
 		}
 		defer func() {
-			err := rc.Close()
-			if err != nil {
-				fmt.Println("Error closing rc:", err)
+			if err := rc.Close(); err != nil {
 				panic(err)
 			}
 		}()
 
-		if _, err = io.Copy(file, rc); err != nil {
+		path := filepath.Join(dest, f.Name)
+		log.Println("Extracting", path)
+
+		// Check for ZipSlip (Directory traversal)
+		if !strings.HasPrefix(path, filepath.Clean(dest)+string(os.PathSeparator)) {
+			return fmt.Errorf("illegal file path: %s", path)
+		}
+
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(path, f.Mode())
+		} else {
+			os.MkdirAll(filepath.Dir(path), f.Mode())
+			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					panic(err)
+				}
+			}()
+
+			_, err = io.Copy(f, rc)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	for _, f := range r.File {
+		err := extractAndWriteFile(f)
+		if err != nil {
 			return err
 		}
 	}
@@ -154,12 +165,27 @@ func extractTestProxyArchive(archivePath string, outputDir string) error {
 	return nil
 }
 
-func extractTestProxy(archivePath string, outputDir string) error {
+func installTestProxy(archivePath string, outputDir string, proxyPath string) error {
+	var err error
 	if strings.HasSuffix(archivePath, ".zip") {
-		return extractTestProxyZip(archivePath, outputDir)
+		err = extractTestProxyZip(archivePath, outputDir)
 	} else {
-		return extractTestProxyArchive(archivePath, outputDir)
+		err = extractTestProxyArchive(archivePath, outputDir)
 	}
+	if err != nil {
+		return err
+	}
+
+	err = os.Chmod(proxyPath, 0755)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(archivePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func restoreRecordings(proxyPath string, pathToRecordings string) error {
@@ -237,7 +263,6 @@ func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir st
 	if err != nil {
 		return err
 	}
-	defer archive.Close()
 
 	log.Printf("Downloading test proxy version %s to %s for %s/%s\n",
 		proxyVersion, proxyPath, runtime.GOOS, runtime.GOARCH)
@@ -247,22 +272,21 @@ func ensureTestProxyInstalled(proxyVersion string, proxyPath string, proxyDir st
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	_, err = io.Copy(archive, resp.Body)
 	if err != nil {
 		return err
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	err = archive.Close()
+	if err != nil {
+		return err
+	}
 
-	err = extractTestProxy(proxyDownloadPath, proxyDir)
-	if err != nil {
-		return err
-	}
-	err = os.Chmod(proxyPath, 0755)
-	if err != nil {
-		return err
-	}
-	err = os.Remove(proxyDownloadPath)
+	err = installTestProxy(proxyDownloadPath, proxyDir, proxyPath)
 	if err != nil {
 		return err
 	}
